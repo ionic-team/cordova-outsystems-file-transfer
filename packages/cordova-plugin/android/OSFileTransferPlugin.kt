@@ -21,6 +21,7 @@ import org.json.JSONObject
 class OSFileTransferPlugin : CordovaPlugin() {
     companion object {
         private const val PROGRESS_UPDATE_INTERVAL = 100L // 100ms between progress updates
+        private const val DEFAULT_TIMEOUT_MS = 60000 // 60 seconds default timeout
     }
 
     private val controller by lazy { IONFLTRController() }
@@ -81,7 +82,7 @@ class OSFileTransferPlugin : CordovaPlugin() {
             val path = optionsObject.optString("path")
             
             if (url.isBlank() || path.isBlank()) {
-                return null
+                null
             }
             
             OSFileTransferDownloadOptions(
@@ -102,7 +103,7 @@ class OSFileTransferPlugin : CordovaPlugin() {
             val path = optionsObject.optString("path")
             
             if (url.isBlank() || path.isBlank()) {
-                return null
+                null
             }
             
             OSFileTransferUploadOptions(
@@ -128,37 +129,28 @@ class OSFileTransferPlugin : CordovaPlugin() {
             headers = headers.toMap(),
             params = params.toParamsMap(),
             shouldEncodeUrlParams = options.optBoolean("shouldEncodeUrlParams", true),
-            readTimeout = options.optInt("readTimeout", 60000),
-            connectTimeout = options.optInt("connectTimeout", 60000),
+            readTimeout = options.optInt("readTimeout", DEFAULT_TIMEOUT_MS),
+            connectTimeout = options.optInt("connectTimeout", DEFAULT_TIMEOUT_MS),
             disableRedirects = options.optBoolean("disableRedirects", false)
         )
     }
 
     private fun JSONObject.toMap(): Map<String, String> {
-        val map = mutableMapOf<String, String>()
-        this.keys().forEach { key ->
-            map[key] = this.optString(key, "")
-        }
-        return map
+        return keys().asSequence().associateWith { key -> optString(key, "") }
     }
 
     private fun JSONObject.toParamsMap(): Map<String, Array<String>> {
         val map = mutableMapOf<String, Array<String>>()
         this.keys().forEach { key ->
-            val stringValue = this.optString(key, null)
-            if (stringValue != null) {
-                map[key] = arrayOf(stringValue)
-                return@forEach
-            }
-            
-            val arrayValue = this.optJSONArray(key)
-            if (arrayValue != null) {
-                val values = mutableListOf<String>()
-                for (i in 0 until arrayValue.length()) {
-                    values.add(arrayValue.optString(i, ""))
-                }
-                if (values.isNotEmpty()) {
-                    map[key] = values.toTypedArray()
+            when (val value = this.opt(key)) {
+                is String -> map[key] = arrayOf(value)
+                is JSONArray -> {
+                    val values = (0 until value.length())
+                        .mapNotNull { value.optString(it, null) }
+                        .toTypedArray()
+                    if (values.isNotEmpty()) {
+                        map[key] = values
+                    }
                 }
             }
         }
