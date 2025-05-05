@@ -54,8 +54,17 @@ object OSFileTransferErrors {
         httpStatus = 304
     )
     
-    fun genericError(cause: Throwable) = ErrorInfo(
+    fun httpError(responseCode: String, message: String, responseBody: String?, headers: Map<String, List<String>>?) = ErrorInfo(
         code = formatErrorCode(11),
+        message = "HTTP error: $responseCode - $message",
+        httpStatus = responseCode.toIntOrNull(),
+        body = responseBody,
+        headers = headers,
+        exception = message
+    )
+    
+    fun genericError(cause: Throwable) = ErrorInfo(
+        code = formatErrorCode(12),
         message = "The operation failed with an error - ${cause.localizedMessage}",
         exception = cause.localizedMessage
     )
@@ -76,14 +85,7 @@ fun Throwable.toOSFileTransferError(): OSFileTransferErrors.ErrorInfo = when (th
         if (responseCode == "304") {
             OSFileTransferErrors.notModified
         } else {
-            OSFileTransferErrors.ErrorInfo(
-                code = OSFileTransferErrors.formatErrorCode(11),
-                message = "HTTP error: $responseCode - $message",
-                httpStatus = responseCode.toIntOrNull(),
-                body = responseBody,
-                headers = headers,
-                exception = message
-            )
+            OSFileTransferErrors.httpError(responseCode, message, responseBody, headers)
         }
     }
     is IONFLTRException.ConnectionError -> OSFileTransferErrors.connectionError

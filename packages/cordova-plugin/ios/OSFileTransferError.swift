@@ -9,8 +9,8 @@ enum OSFileTransferError: Error {
     case fileDoesNotExist
     case connectionError
     case notModified
-    case genericError(message: String)
     case httpError(responseCode: Int, responseBody: String?, headers: [String: [String]]?)
+    case genericError(message: String)
     
     var codeNumber: Int {
         switch self {
@@ -20,7 +20,8 @@ enum OSFileTransferError: Error {
         case .fileDoesNotExist: return 8
         case .connectionError: return 9
         case .notModified: return 10
-        case .genericError, .httpError: return 11
+        case .httpError: return 11
+        case .genericError: return 12
         }
     }
     
@@ -37,8 +38,8 @@ enum OSFileTransferError: Error {
         case .fileDoesNotExist: return "Operation failed because file does not exist."
         case .connectionError: return "Failed to connect to server."
         case .notModified: return "The server responded with HTTP 304 – Not Modified. If you want to avoid this, check your headers related to HTTP caching."
+        case .httpError(let responseCode, _, _): return "HTTP error: \(responseCode) - \(HTTPURLResponse.localizedString(forStatusCode: responseCode))"
         case .genericError(let message): return "The operation failed with an error - \(message)"
-        case .httpError(let responseCode, _, _): return "HTTP error: \(responseCode)"
         }
     }
     
