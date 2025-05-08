@@ -1,4 +1,5 @@
 "use strict";
+const cordova = require("cordova");
 function s(t) {
   t.CapacitorUtils.Synapse = new Proxy(
     {},
@@ -44,7 +45,7 @@ function u(t) {
 function y(t = false) {
   window.CapacitorUtils = window.CapacitorUtils || {}, window.Capacitor !== void 0 && !t ? s(window) : window.cordova !== void 0 && u(window);
 }
-const exec = require("cordova/exec");
+const exec = cordova.require("cordova/exec");
 function downloadFile(options, success, error) {
   exec(success, error, "OSFileTransferPlugin", "downloadFile", [options]);
 }

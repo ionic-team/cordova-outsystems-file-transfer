@@ -1,6 +1,6 @@
-(function(factory) {
-  typeof define === "function" && define.amd ? define(factory) : factory();
-})(function() {
+(function(global, factory) {
+  typeof exports === "object" && typeof module !== "undefined" ? factory(require("cordova")) : typeof define === "function" && define.amd ? define(["cordova"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.cordova));
+})(this, function(cordova) {
   "use strict";
   function s(t) {
     t.CapacitorUtils.Synapse = new Proxy(
@@ -47,7 +47,7 @@
   function y(t = false) {
     window.CapacitorUtils = window.CapacitorUtils || {}, window.Capacitor !== void 0 && !t ? s(window) : window.cordova !== void 0 && u(window);
   }
-  const exec = require("cordova/exec");
+  const exec = cordova.require("cordova/exec");
   function downloadFile(options, success, error) {
     exec(success, error, "OSFileTransferPlugin", "downloadFile", [options]);
   }
