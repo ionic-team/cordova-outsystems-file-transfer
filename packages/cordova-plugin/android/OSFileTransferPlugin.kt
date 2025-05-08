@@ -24,10 +24,15 @@ class OSFileTransferPlugin : CordovaPlugin() {
         private const val DEFAULT_TIMEOUT_MS = 60000 // 60 seconds default timeout
     }
 
-    private val controller by lazy { IONFLTRController() }
+    private lateinit var controller: IONFLTRController
     private val ioScope by lazy { CoroutineScope(Dispatchers.IO) }
     private val listeners: MutableList<CallbackContext> = mutableListOf()
     private var lastProgressUpdate = 0L
+
+    override fun pluginInitialize() {
+        super.pluginInitialize()
+        controller = IONFLTRController(cordova.context)
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -136,12 +141,16 @@ class OSFileTransferPlugin : CordovaPlugin() {
     }
 
     private fun JSONObject.toMap(): Map<String, String> {
-        return keys().asSequence().associateWith { key -> optString(key, "") }
+        val map = mutableMapOf<String, String>()
+        keys().asSequence().forEach { key -> 
+            map[key] = optString(key, "")
+        }
+        return map
     }
 
     private fun JSONObject.toParamsMap(): Map<String, Array<String>> {
         val map = mutableMapOf<String, Array<String>>()
-        this.keys().forEach { key ->
+        this.keys().asSequence().forEach { key ->
             when (val value = this.opt(key)) {
                 is String -> map[key] = arrayOf(value)
                 is JSONArray -> {
@@ -237,7 +246,7 @@ class OSFileTransferPlugin : CordovaPlugin() {
                             put("response", result.data.responseBody)
                             
                             val headersObj = JSONObject()
-                            result.data.headers.forEach { (key, values) ->
+                            result.data.headers.entries.forEach { (key, values) ->
                                 headersObj.put(key, values.firstOrNull() ?: "")
                             }
                             put("headers", headersObj)
@@ -303,7 +312,7 @@ class OSFileTransferPlugin : CordovaPlugin() {
             
             if (error.headers != null) {
                 val headersObj = JSONObject()
-                error.headers.forEach { (key, values) ->
+                error.headers.entries.forEach { (key, values) ->
                     headersObj.put(key, values.firstOrNull() ?: "")
                 }
                 put("headers", headersObj)
