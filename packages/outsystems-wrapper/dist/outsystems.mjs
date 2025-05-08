@@ -149,8 +149,9 @@ class OSFileTransferWrapper {
     this.listenersCount = 0;
   }
   downloadFile(options, scope) {
+    let fileName = options.path.split("/").pop();
     if (this.isPWA()) {
-      downloadWithHeaders(options.url, options.headers, options.fileName);
+      downloadWithHeaders(options.url, options.headers, fileName);
       return;
     }
     if (!scope) {
@@ -160,34 +161,15 @@ class OSFileTransferWrapper {
     const downloadSuccess = (res) => {
       if (this.isFilePluginAvailable() && res.path) {
         const statSuccess = (fileInfo) => {
-          this.completeDownload(scope, {
-            path: res.path,
-            name: fileInfo.name || res.path?.split("/").pop() || "",
-            size: fileInfo.size,
-            type: fileInfo.type,
-            mtime: fileInfo.mtime,
-            ctime: fileInfo.ctime,
-            isFile: true
-          });
-        };
-        const statError = () => {
-          this.completeDownload(scope, {
-            path: res.path,
-            name: res.path?.split("/").pop() || "",
-            isFile: true
-          });
+          this.handleBasicFileInfo(scope, res.path, fileInfo.name);
         };
         OSFilePluginWrapper.Instance.stat(
           statSuccess,
-          statError,
+          () => this.handleBasicFileInfo(scope, res.path),
           { path: res.path }
         );
       } else {
-        this.completeDownload(scope, {
-          path: res.path,
-          name: res.path?.split("/").pop() || "",
-          isFile: true
-        });
+        this.handleBasicFileInfo(scope, res.path);
       }
     };
     const downloadError = (err) => {
@@ -210,17 +192,38 @@ class OSFileTransferWrapper {
     }
   }
   /**
+   * Helper method to handle basic file info when detailed stats aren't available
+   */
+  handleBasicFileInfo(scope, filePath, fileName) {
+    this.completeDownload(scope, {
+      path: filePath,
+      name: fileName || filePath?.split("/").pop() || "",
+      isFile: true,
+      isDirectory: false,
+      fullPath: filePath,
+      nativeURL: filePath ? `file://${filePath}` : void 0
+    });
+  }
+  /**
    * Helper method to complete the download operation and notify the callback
    */
   completeDownload(scope, result) {
+    const fileResult = {
+      path: result.path,
+      isFile: result.isFile || true,
+      isDirectory: false,
+      name: result.name || result.path?.split("/").pop() || "",
+      fullPath: result.path,
+      nativeURL: result.path ? `file://${result.path}` : void 0
+    };
     if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
-      scope.downloadCallback.downloadComplete(result);
+      scope.downloadCallback.downloadComplete(fileResult);
     }
     this.handleTransferFinished();
   }
   uploadFile(options, scope) {
     if (this.isPWA()) {
-      fetch(options.path).then((response) => response.blob()).then((blob) => {
+      fetch(options.url).then((response) => response.blob()).then((blob) => {
         const file = new File([blob], options.path.split("/").pop() || "file", { type: options.mimeType || "application/octet-stream" });
         uploadWithHeaders(options.url, options.headers, file, options.fileKey || "file");
       });

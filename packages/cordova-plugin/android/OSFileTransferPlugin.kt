@@ -247,7 +247,9 @@ class OSFileTransferPlugin : CordovaPlugin() {
                             
                             val headersObj = JSONObject()
                             result.data.headers?.entries?.forEach { (key, values) ->
-                                headersObj.put(key, values.firstOrNull() ?: "")
+                                key?.let { headerKey ->
+                                    headersObj.put(headerKey, values.firstOrNull() ?: "")
+                                }
                             }
                             put("headers", headersObj)
                         }
@@ -312,8 +314,10 @@ class OSFileTransferPlugin : CordovaPlugin() {
             
             if (error.headers != null) {
                 val headersObj = JSONObject()
-                error.headers?.entries?.forEach { (key, values) ->
-                    headersObj.put(key, values.firstOrNull() ?: "")
+                error.headers.entries.forEach { (key, values) ->
+                    key?.let { headerKey ->
+                        headersObj.put(headerKey, values.firstOrNull() ?: "")
+                    }
                 }
                 put("headers", headersObj)
             }

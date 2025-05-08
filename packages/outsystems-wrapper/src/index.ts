@@ -8,8 +8,10 @@ class OSFileTransferWrapper {
     private listenersCount = 0;
 
     downloadFile(options: any, scope: any): void {
+        let fileName = options.path.split('/').pop();
+
         if (this.isPWA()) {
-            OSFileTransferLibJS.downloadWithHeaders(options.url, options.headers, options.fileName);
+            OSFileTransferLibJS.downloadWithHeaders(options.url, options.headers, fileName);
             return;
         }
 
@@ -20,43 +22,18 @@ class OSFileTransferWrapper {
         this.listenersCount++;
         
         const downloadSuccess = (res: DownloadFileResult) => {
-            // Check if File Plugin is available
             if (this.isFilePluginAvailable() && res.path) {
-                // Use FilePlugin's stat to get additional file metadata
                 const statSuccess = (fileInfo: any) => {
-                    this.completeDownload(scope, {
-                        path: res.path,
-                        name: fileInfo.name || res.path?.split('/').pop() || '',
-                        size: fileInfo.size,
-                        type: fileInfo.type,
-                        mtime: fileInfo.mtime,
-                        ctime: fileInfo.ctime,
-                        isFile: true
-                    });
+                    this.handleBasicFileInfo(scope, res.path, fileInfo.name);
                 };
 
-                const statError = () => {
-                    // Fallback to basic info if stat fails
-                    this.completeDownload(scope, {
-                        path: res.path,
-                        name: res.path?.split('/').pop() || '',
-                        isFile: true
-                    });
-                };
-
-                // Call the stat method
                 OSFilePluginWrapper.Instance.stat(
                     statSuccess, 
-                    statError, 
+                    () => this.handleBasicFileInfo(scope, res.path), 
                     { path: res.path }
                 );
             } else {
-                // Fallback if File Plugin is not available
-                this.completeDownload(scope, {
-                    path: res.path,
-                    name: res.path?.split('/').pop() || '',
-                    isFile: true
-                });
+                this.handleBasicFileInfo(scope, res.path);
             }
         };
         
@@ -89,11 +66,34 @@ class OSFileTransferWrapper {
     }
     
     /**
+     * Helper method to handle basic file info when detailed stats aren't available
+     */
+    private handleBasicFileInfo(scope: any, filePath?: string, fileName?: string): void {
+        this.completeDownload(scope, {
+            path: filePath,
+            name: fileName || filePath?.split('/').pop() || '',
+            isFile: true,
+            isDirectory: false,
+            fullPath: filePath,
+            nativeURL: filePath ? `file://${filePath}` : undefined
+        });
+    }
+    
+    /**
      * Helper method to complete the download operation and notify the callback
      */
     private completeDownload(scope: any, result: any): void {
+        const fileResult = {
+            path: result.path,
+            isFile: result.isFile || true,
+            isDirectory: false,
+            name: result.name || result.path?.split('/').pop() || '',
+            fullPath: result.path,
+            nativeURL: result.path ? `file://${result.path}` : undefined,
+        };
+        
         if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
-            scope.downloadCallback.downloadComplete(result);
+            scope.downloadCallback.downloadComplete(fileResult);
         }
         this.handleTransferFinished();
     }
@@ -101,7 +101,7 @@ class OSFileTransferWrapper {
     uploadFile(options: any, scope: any): void {
         if (this.isPWA()) {
             // For PWA, manually retrieve the file and use the web implementation
-            fetch(options.path)
+            fetch(options.url)
                 .then(response => response.blob())
                 .then(blob => {
                     const file = new File([blob], options.path.split('/').pop() || 'file', { type: options.mimeType || 'application/octet-stream' });
@@ -116,7 +116,6 @@ class OSFileTransferWrapper {
         }
         
         this.listenersCount++;
-        
         const uploadSuccess = (res: UploadFileResult) => {
             if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
                 scope.uploadCallback.uploadComplete(res);

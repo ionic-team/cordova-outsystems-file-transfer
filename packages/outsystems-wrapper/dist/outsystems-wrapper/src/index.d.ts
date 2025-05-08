@@ -2,6 +2,10 @@ declare class OSFileTransferWrapper {
     private listenersCount;
     downloadFile(options: any, scope: any): void;
     /**
+     * Helper method to handle basic file info when detailed stats aren't available
+     */
+    private handleBasicFileInfo;
+    /**
      * Helper method to complete the download operation and notify the callback
      */
     private completeDownload;
