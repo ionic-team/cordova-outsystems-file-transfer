@@ -51,8 +51,6 @@
         </podspec> -->
         
         <!-- Local framework file -->
-        <resource-file src="packages/cordova-plugin/ios/IONFileTransferLib.zip" />
-        
         <framework src="packages/cordova-plugin/ios/IONFileTransferLib.zip" custom="true" embed="true" />
     
     </platform>

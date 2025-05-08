@@ -30,7 +30,7 @@ class FileTransferErrorClass {
     }
 
     getErrorCode(): string {
-        return `OS-PLUG-FTRF-${this.code.toString().padStart(4, '0')}`;
+        return `OS-PLUG-FLTR-${this.code.toString().padStart(4, '0')}`;
     }
 
     getMessage(): string {
@@ -44,9 +44,11 @@ class FileTransferErrorClass {
 
 // Static instances of error types
 const FileTransferError = {
-    UPLOAD: new FileTransferErrorClass(1, "Error when uploading."),
-    DOWNLOAD: new FileTransferErrorClass(2, "Error when downloading."),
-    INVALID_URL: new FileTransferErrorClass(3, "Invalid url.")
+    UPLOAD: new FileTransferErrorClass(10, "HTTP error when uploading."),
+    DOWNLOAD: new FileTransferErrorClass(10, "HTTP error when downloading."),
+    INVALID_URL: new FileTransferErrorClass(5, "Invalid server URL."),
+    CONNECTION_ERR: new FileTransferErrorClass(8, "Failed to connect to server."),
+    GENERIC_ERR: new FileTransferErrorClass(11, "The operation failed with an error.")
 };
 
 /** EVENTS */
@@ -70,9 +72,15 @@ async function onError(error: FileTransferErrorClass, request?: XMLHttpRequest, 
         }
     } 
 
+    // For HTTP errors, use the status code in the message
+    let message = error.getMessage();
+    if (request && request.status >= 400 && (error === FileTransferError.UPLOAD || error === FileTransferError.DOWNLOAD)) {
+        message = `HTTP error: ${request.status} - ${request.statusText || 'Unknown error'}`;
+    }
+
     let requestError: FileTransferErrorObject = {
         code: error.getErrorCode(),
-        message: error.getMessage(),
+        message: message,
         source: source,
         target: target,
         http_status: request?.status || 0,
@@ -106,7 +114,8 @@ function onDownloadComplete(request: XMLHttpRequest, fileName?: string): void {
     if(request.readyState !== 4)
         return;
     
-    if(request.status != 200) {
+    // Check for successful status code range (200-299)
+    if(request.status < 200 || request.status >= 300) {
         onError(FileTransferError.DOWNLOAD, request, request.responseURL, fileName || "");
         return;
     }    
@@ -148,7 +157,8 @@ function onUploadComplete(request: XMLHttpRequest, file: File): void {
     if(request.readyState !== 4)
         return;
     
-    if(request.status != 200) {
+    // Check for successful status code range (200-299)
+    if(request.status < 200 || request.status >= 300) {
         onError(FileTransferError.UPLOAD, request, request.responseURL, file.name);
         return;
     }    
@@ -214,7 +224,7 @@ export function downloadWithHeaders(url: string, headers: Header[], fileName?: s
     request.onprogress = onDownloadProgress;
 
     request.onerror = (_e) => {
-        onError(FileTransferError.DOWNLOAD, request, fileName, url);
+        onError(FileTransferError.CONNECTION_ERR, request, fileName, url);
     };
     request.open('GET', url);
 
@@ -267,7 +277,7 @@ export function uploadWithHeaders(url: string, headers: Header[], content: File,
     };
 
     request.upload.onerror = (_e) => {
-        onError(FileTransferError.UPLOAD, request, content.name, url);
+        onError(FileTransferError.CONNECTION_ERR, request, content.name, url);
     };
 
     request.open('POST', url);

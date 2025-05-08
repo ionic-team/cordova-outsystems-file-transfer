@@ -1,82 +1,55 @@
 import Foundation
 import IONFileTransferLib
 
-enum OSFileTransferError: Error {
-    case invalidParameters
-    case invalidServerUrl(url: String)
-    case urlEmpty
-    case permissionDenied
-    case fileDoesNotExist
-    case connectionError
-    case notModified
-    case httpError(responseCode: Int, responseBody: String?, headers: [String: [String]]?)
-    case genericError(message: String)
+struct OSFileTransferError: Error {
+    /// A  error code in the format `OS-PLUG-FLTR-XXXX`.
+    let code: String
     
-    var codeNumber: Int {
-        switch self {
-        case .invalidParameters: return 5
-        case .invalidServerUrl, .urlEmpty: return 6
-        case .permissionDenied: return 7
-        case .fileDoesNotExist: return 8
-        case .connectionError: return 9
-        case .notModified: return 10
-        case .httpError: return 11
-        case .genericError: return 12
-        }
-    }
+    /// A human-readable error message.
+    let message: String
     
-    var code: String {
-        return "OS-PLUG-FLTR-\(String(format: "%04d", codeNumber))"
-    }
+    /// The source URL or path related to the error, if available.
+    var source: String?
+
+    /// The target URL or path related to the error, if available.
+    var target: String?
+
+    /// The HTTP status code, if the error is related to a network response.
+    let httpStatus: Int?
+
+    /// The response body returned by the server, if any.
+    let body: String?
+
+    /// The response headers returned by the server, if any.
+    let headers: [String: [String]]?
     
-    var description: String {
-        switch self {
-        case .invalidParameters: return "The method's input parameters aren't valid."
-        case .invalidServerUrl(let url): return "Invalid server URL was provided - \(url)"
-        case .urlEmpty: return "URL to connect to is either null or empty."
-        case .permissionDenied: return "Unable to perform operation, user denied permission request."
-        case .fileDoesNotExist: return "Operation failed because file does not exist."
-        case .connectionError: return "Failed to connect to server."
-        case .notModified: return "The server responded with HTTP 304 – Not Modified. If you want to avoid this, check your headers related to HTTP caching."
-        case .httpError(let responseCode, _, _): return "HTTP error: \(responseCode) - \(HTTPURLResponse.localizedString(forStatusCode: responseCode))"
-        case .genericError(let message): return "The operation failed with an error - \(message)"
-        }
-    }
-    
-    var source: String? {
-        return nil
-    }
-    
-    var target: String? {
-        return nil
-    }
-    
-    var httpStatus: Int? {
-        switch self {
-        case .notModified: return 304
-        case .httpError(let responseCode, _, _): return responseCode
-        default: return nil
-        }
-    }
-    
-    var body: String? {
-        switch self {
-        case .httpError(_, let responseBody, _): return responseBody
-        default: return nil
-        }
-    }
-    
-    var headers: [String: [String]]? {
-        switch self {
-        case .httpError(_, _, let headers): return headers
-        default: return nil
-        }
+    /// The underlying error that caused this error, if any.
+    let cause: Error?
+
+    init(
+        code: Int,
+        message: String,
+        source: String? = nil,
+        target: String? = nil,
+        httpStatus: Int? = nil,
+        body: String? = nil,
+        headers: [String: [String]]? = nil,
+        cause: Error? = nil
+    ) {
+        self.code = String(format: "OS-PLUG-FLTR-%04d", code)
+        self.message = message
+        self.source = source
+        self.target = target
+        self.httpStatus = httpStatus
+        self.body = body
+        self.headers = headers
+        self.cause = cause
     }
     
     func toDictionary() -> [String: Any] {
         var dict: [String: Any] = [
             "code": code,
-            "message": description
+            "message": message
         ]
         
         if let source = source {
@@ -100,33 +73,119 @@ enum OSFileTransferError: Error {
             dict["headers"] = headersDict
         }
         
+        if let cause = cause {
+            dict["exception"] = cause.localizedDescription
+        }
+        
         return dict
     }
 }
 
+// MARK: - Static Constructors
+
+extension OSFileTransferError {
+    static func invalidParameters(_ message: String? = nil) -> OSFileTransferError {
+        .init(code: 4, message: message ?? "The method's input parameters aren't valid.")
+    }
+    
+    static func invalidServerUrl(_ url: String?) -> OSFileTransferError {
+        .init(
+            code: 5,
+            message: (url?.isEmpty ?? true)
+                ? "URL to connect to is either null or empty."
+                : "Invalid server URL was provided - \(url!)",
+            source: url
+        )
+    }
+    
+    static func fileDoesNotExist() -> OSFileTransferError {
+        .init(code: 7, message: "Operation failed because file does not exist.")
+    }
+
+    static func connectionError() -> OSFileTransferError {
+        .init(code: 8, message: "Failed to connect to server.")
+    }
+    
+    static func notModified() -> OSFileTransferError {
+        .init(
+            code: 9,
+            message: "The server responded with HTTP 304 – Not Modified. If you want to avoid this, check your headers related to HTTP caching.",
+            httpStatus: 304
+        )
+    }
+    
+    static func httpError(
+        responseCode: Int,
+        message: String,
+        responseBody: String? = nil,
+        headers: [String: [String]]? = nil,
+        cause: Error? = nil
+    ) -> OSFileTransferError {
+        .init(
+            code: 10,
+            message: "HTTP error: \(responseCode) - \(message)",
+            httpStatus: responseCode,
+            body: responseBody,
+            headers: headers,
+            cause: cause
+        )
+    }
+    
+    static func genericError(
+        message: String = "The operation failed with an error.",
+        cause: Error? = nil
+    ) -> OSFileTransferError {
+        .init(
+            code: 11,
+            message: message,
+            cause: cause
+        )
+    }
+}
+
+// MARK: - IONFLTRException Mapping
+
 extension IONFLTRException {
     func toFileTransferError() -> OSFileTransferError {
         switch self {
-        case .invalidPath(_):
-            return .invalidParameters
-        case .emptyURL(_):
-            return .urlEmpty
+        case .invalidPath:
+            return OSFileTransferError.invalidParameters()
+        case .emptyURL:
+            return OSFileTransferError.invalidServerUrl(nil)
         case .invalidURL(let url):
-            return .invalidServerUrl(url: url)
-        case .fileDoesNotExist(_):
-            return .fileDoesNotExist
-        case .cannotCreateDirectory(let message, _):
-            return .genericError(message: message)
+            return OSFileTransferError.invalidServerUrl(url)
+        case .fileDoesNotExist:
+            return OSFileTransferError.fileDoesNotExist()
+        case .cannotCreateDirectory:
+            return OSFileTransferError.genericError(cause: self)
         case .httpError(let responseCode, let responseBody, let headers):
             return responseCode == 304
-                ? .notModified
-                : .httpError(responseCode: responseCode, responseBody: responseBody, headers: headers)
-        case .connectionError(_):
-            return .connectionError
-        case .transferError(let message):
-            return .genericError(message: message)
-        case .unknownError(let cause):
-            return .genericError(message: cause?.localizedDescription ?? "Unknown error")
+            ? OSFileTransferError.notModified()
+            : OSFileTransferError.httpError(
+                responseCode: responseCode,
+                message: self.description,
+                responseBody: responseBody,
+                headers: headers,
+                cause: self
+            )
+        case .connectionError:
+            return OSFileTransferError.connectionError()
+        case .transferError:
+            return OSFileTransferError.genericError(cause: self)
+        case .unknownError:
+            return OSFileTransferError.genericError(cause: self)
+        }
+    }
+}
+
+extension Error {
+    func toFileTransferError() -> OSFileTransferError {
+        if let error = self as? OSFileTransferError {
+            return error
+        } else if let error = self as? IONFLTRException {
+            return error.toFileTransferError()
+        } else {
+            return OSFileTransferError.genericError(cause: self)
         }
     }
 } 

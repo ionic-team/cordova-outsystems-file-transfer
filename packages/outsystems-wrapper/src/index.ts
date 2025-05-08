@@ -1,61 +1,18 @@
-import { DownloadFileOptions, DownloadFileResult, FileTransferError, ProgressStatus, UploadFileOptions, UploadFileResult } from "../../cordova-plugin/src/definitions";
+import { DownloadFileResult, FileTransferError, ProgressStatus, UploadFileResult } from "../../cordova-plugin/src/definitions";
 import * as OSFileTransferLibJS from "./pwa";
+
+// Import the FilePlugin
+declare const OSFilePluginWrapper: { Instance: any };
 
 class OSFileTransferWrapper {
     private listenersCount = 0;
 
-    downloadFile(options: DownloadFileOptions, scope: any): void {
+    downloadFile(options: any, scope: any): void {
         if (this.isPWA()) {
-            // For PWA, use the web implementation with browser events
-            OSFileTransferLibJS.download(options.url, options.path.split('/').pop());
-            
-            // Set up event listeners for PWA
-            if (scope) {
-                const downloadProgressListener = (event: any) => {
-                    if (scope.downloadCallback && scope.downloadCallback.downloadProgress) {
-                        const progressData = event.detail.progress;
-                        const status: ProgressStatus = {
-                            type: "download",
-                            url: options.url,
-                            bytes: progressData.loaded,
-                            contentLength: progressData.total,
-                            lengthComputable: progressData.lengthComputable
-                        };
-                        scope.downloadCallback.downloadProgress(status);
-                    }
-                };
-                
-                const downloadCompleteListener = (event: any) => {
-                    if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
-                        const result = event.detail.result;
-                        scope.downloadCallback.downloadComplete({
-                            path: options.path,
-                            name: result.name,
-                            isFile: result.isFile
-                        });
-                    }
-                    window.removeEventListener('downloadprogress', downloadProgressListener);
-                    window.removeEventListener('downloadcomplete', downloadCompleteListener);
-                    window.removeEventListener('fileTransferError', downloadErrorListener);
-                };
-                
-                const downloadErrorListener = (event: any) => {
-                    if (scope.downloadCallback && scope.downloadCallback.downloadError) {
-                        scope.downloadCallback.downloadError(event.detail.error);
-                    }
-                    window.removeEventListener('downloadprogress', downloadProgressListener);
-                    window.removeEventListener('downloadcomplete', downloadCompleteListener);
-                    window.removeEventListener('fileTransferError', downloadErrorListener);
-                };
-                
-                window.addEventListener('downloadprogress', downloadProgressListener);
-                window.addEventListener('downloadcomplete', downloadCompleteListener);
-                window.addEventListener('fileTransferError', downloadErrorListener);
-            }
-            
+            OSFileTransferLibJS.downloadWithHeaders(options.url, options.headers, options.fileName);
             return;
         }
-        
+
         if (!scope) {
             return;
         }
@@ -63,16 +20,44 @@ class OSFileTransferWrapper {
         this.listenersCount++;
         
         const downloadSuccess = (res: DownloadFileResult) => {
-            if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
-                // In a real implementation, you might want to call FilePlugin's getMetadata/stat for native
-                // and use that to create the `FileDownloadResult` structure that Outsystems expects
-                scope.downloadCallback.downloadComplete({
+            // Check if File Plugin is available
+            if (this.isFilePluginAvailable() && res.path) {
+                // Use FilePlugin's stat to get additional file metadata
+                const statSuccess = (fileInfo: any) => {
+                    this.completeDownload(scope, {
+                        path: res.path,
+                        name: fileInfo.name || res.path?.split('/').pop() || '',
+                        size: fileInfo.size,
+                        type: fileInfo.type,
+                        mtime: fileInfo.mtime,
+                        ctime: fileInfo.ctime,
+                        isFile: true
+                    });
+                };
+
+                const statError = () => {
+                    // Fallback to basic info if stat fails
+                    this.completeDownload(scope, {
+                        path: res.path,
+                        name: res.path?.split('/').pop() || '',
+                        isFile: true
+                    });
+                };
+
+                // Call the stat method
+                OSFilePluginWrapper.Instance.stat(
+                    statSuccess, 
+                    statError, 
+                    { path: res.path }
+                );
+            } else {
+                // Fallback if File Plugin is not available
+                this.completeDownload(scope, {
                     path: res.path,
                     name: res.path?.split('/').pop() || '',
                     isFile: true
                 });
             }
-            this.handleTransferFinished();
         };
         
         const downloadError = (err: FileTransferError) => {
@@ -103,58 +88,24 @@ class OSFileTransferWrapper {
         }
     }
     
-    uploadFile(options: UploadFileOptions, scope: any): void {
+    /**
+     * Helper method to complete the download operation and notify the callback
+     */
+    private completeDownload(scope: any, result: any): void {
+        if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
+            scope.downloadCallback.downloadComplete(result);
+        }
+        this.handleTransferFinished();
+    }
+    
+    uploadFile(options: any, scope: any): void {
         if (this.isPWA()) {
             // For PWA, manually retrieve the file and use the web implementation
             fetch(options.path)
                 .then(response => response.blob())
                 .then(blob => {
                     const file = new File([blob], options.path.split('/').pop() || 'file', { type: options.mimeType || 'application/octet-stream' });
-                    OSFileTransferLibJS.upload(options.url, file, options.fileKey || 'file');
-                    
-                    // Set up event listeners for PWA
-                    if (scope) {
-                        const uploadProgressListener = (event: any) => {
-                            if (scope.uploadCallback && scope.uploadCallback.uploadProgress) {
-                                const progressData = event.detail.progress;
-                                const status: ProgressStatus = {
-                                    type: "upload",
-                                    url: options.url,
-                                    bytes: progressData.loaded,
-                                    contentLength: progressData.total,
-                                    lengthComputable: progressData.lengthComputable
-                                };
-                                scope.uploadCallback.uploadProgress(status);
-                            }
-                        };
-                        
-                        const uploadCompleteListener = (event: any) => {
-                            if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
-                                const result = event.detail.result;
-                                scope.uploadCallback.uploadComplete({
-                                    bytesSent: result.bytesSent,
-                                    responseCode: result.responseCode,
-                                    response: result.response || ''
-                                });
-                            }
-                            window.removeEventListener('uploadprogress', uploadProgressListener);
-                            window.removeEventListener('uploadcomplete', uploadCompleteListener);
-                            window.removeEventListener('fileTransferError', uploadErrorListener);
-                        };
-                        
-                        const uploadErrorListener = (event: any) => {
-                            if (scope.uploadCallback && scope.uploadCallback.uploadError) {
-                                scope.uploadCallback.uploadError(event.detail.error);
-                            }
-                            window.removeEventListener('uploadprogress', uploadProgressListener);
-                            window.removeEventListener('uploadcomplete', uploadCompleteListener);
-                            window.removeEventListener('fileTransferError', uploadErrorListener);
-                        };
-                        
-                        window.addEventListener('uploadprogress', uploadProgressListener);
-                        window.addEventListener('uploadcomplete', uploadCompleteListener);
-                        window.addEventListener('fileTransferError', uploadErrorListener);
-                    }
+                    OSFileTransferLibJS.uploadWithHeaders(options.url, options.headers, file, options.fileKey || 'file');
                 });
             
             return;
@@ -244,6 +195,16 @@ class OSFileTransferWrapper {
     private isSynapseDefined(): boolean {
         // @ts-ignore
         return typeof(CapacitorUtils) !== "undefined" && typeof(CapacitorUtils.Synapse) !== "undefined" && typeof(CapacitorUtils.Synapse.FileTransfer) !== "undefined";
+    }
+
+    /**
+     * Checks if the OSFilePluginWrapper is available
+     * @returns true if the File Plugin is defined, false otherwise
+     */
+    private isFilePluginAvailable(): boolean {
+        return typeof OSFilePluginWrapper !== 'undefined' && 
+               typeof OSFilePluginWrapper.Instance !== 'undefined' &&
+               typeof OSFilePluginWrapper.Instance.stat === 'function';
     }
 }
 
