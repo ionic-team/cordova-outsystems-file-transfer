@@ -1,6 +1,6 @@
+import { require } from 'cordova';
 import { DownloadFileOptions, DownloadFileResult, FileTransferError, ProgressStatus, UploadFileOptions, UploadFileResult } from "./definitions";
 
-// @ts-ignore
 const exec = require('cordova/exec');
 
 function downloadFile(options: DownloadFileOptions, success: (output: DownloadFileResult) => void, error: (error: FileTransferError) => void): void {
@@ -23,7 +23,6 @@ function emptyListener(_: any): void {
   return;
 }
 
-// @ts-ignore
 module.exports = {
   downloadFile,
   uploadFile,
