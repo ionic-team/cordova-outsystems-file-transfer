@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import Capacitor
 import IONFileTransferLib
 import QuartzCore
 
