@@ -49,9 +49,7 @@
                 <pod name="IONFileTransferLib" spec="1.0.0" />
             </pods>
         </podspec> -->
-        
-        <!-- Local framework file -->
-        <framework src="packages/cordova-plugin/ios/IONFileTransferLib.zip" custom="true" embed="true" />
+        <framework src="packages/cordova-plugin/ios/IONFileTransferLib.xcframework" custom="true" embed="true" />
     
     </platform>
 </plugin>
