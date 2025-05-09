@@ -159,13 +159,20 @@ extension IONFLTRException {
         case .cannotCreateDirectory:
             return OSFileTransferError.genericError(cause: self)
         case .httpError(let responseCode, let responseBody, let headers):
+            // Convert String:String dictionary to String:[String] format
+            let convertedHeaders: [String: [String]]? = headers.map { dict in
+                return dict.reduce(into: [String: [String]]()) { result, entry in
+                    result[entry.key] = [entry.value]
+                }
+            }
+            
             return responseCode == 304
             ? OSFileTransferError.notModified()
             : OSFileTransferError.httpError(
                 responseCode: responseCode,
                 message: self.description,
                 responseBody: responseBody,
-                headers: headers,
+                headers: convertedHeaders,
                 cause: self
             )
         case .connectionError:
@@ -173,6 +180,8 @@ extension IONFLTRException {
         case .transferError:
             return OSFileTransferError.genericError(cause: self)
         case .unknownError:
+            return OSFileTransferError.genericError(cause: self)
+        @unknown default:
             return OSFileTransferError.genericError(cause: self)
         }
     }
