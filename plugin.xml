@@ -34,7 +34,7 @@
             <feature name="OSFileTransferPlugin">
                 <param name="ios-package" value="OSFileTransferPlugin" />
             </feature>
-            <preference name="SwiftVersion" value="5" />
+            <preference name="SwiftVersion" value="5.1" />
         </config-file>
 
         <source-file src="packages/cordova-plugin/ios/OSFileTransferError.swift" />

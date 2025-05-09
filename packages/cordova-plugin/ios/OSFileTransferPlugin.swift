@@ -154,7 +154,7 @@ class OSFileTransferPlugin : CDVPlugin {
         let method = options["method"] as? String ?? defaultMethod
         let headers = options["headers"] as? [String: String] ?? [:]
         let params = extractParams(from: options["params"] as? [String: Any] ?? [:])
-        let timeout = (options["connectTimeout"] as? Int ?? 60000) / 1000  // Convert ms to seconds
+        let timeoutInSeconds = Double((options["connectTimeout"] as? Int ?? 60000) / 1000)  // Convert ms to seconds
         let disableRedirects = options["disableRedirects"] as? Bool ?? false
         let shouldEncodeUrlParams = options["shouldEncodeUrlParams"] as? Bool ?? true
         
@@ -162,7 +162,7 @@ class OSFileTransferPlugin : CDVPlugin {
             method: method,
             params: params,
             headers: headers,
-            timeout: Double(timeout),
+            timeout: timeoutInSeconds,
             disableRedirects: disableRedirects,
             shouldEncodeUrlParams: shouldEncodeUrlParams
         )
@@ -238,7 +238,9 @@ class OSFileTransferPlugin : CDVPlugin {
                         return ["path": path]
                     case .upload:
                         let headersDict = data.headers.reduce(into: [String: String]()) { result, entry in
-                            result[entry.key] = entry.value.first
+                            if let key = entry.key as? String, !key.isEmpty {
+                                result[key] = entry.value.first
+                            }
                         }
                         
                         return [
