@@ -237,19 +237,11 @@ class OSFileTransferPlugin : CDVPlugin {
                     case .download:
                         return ["path": path]
                     case .upload:
-                        var headersDict: [String: String] = [:]
-                        
-                        for (key, values) in data.headers {
-                            if !key.isEmpty && values.count > 0 {
-                                headersDict[key] = values[0]
-                            }
-                        }
-                        
                         return [
                             "bytesSent": data.totalBytes,
                             "responseCode": data.responseCode,
                             "response": data.responseBody ?? "",
-                            "headers": headersDict
+                            "headers": data.headers
                         ]
                     }
                 }()
