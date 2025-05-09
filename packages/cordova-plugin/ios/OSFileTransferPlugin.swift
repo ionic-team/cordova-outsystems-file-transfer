@@ -239,7 +239,7 @@ class OSFileTransferPlugin : CDVPlugin {
                     case .upload:
                         let headersDict = data.headers.reduce(into: [String: String]()) { result, entry in
                             if !entry.key.isEmpty {
-                                result[entry.key] = entry.value.joined()
+                                result[entry.key] = entry.value.first ?? ""
                             }
                         }
                         
