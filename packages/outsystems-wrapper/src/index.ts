@@ -46,7 +46,12 @@ class OSFileTransferWrapper {
         
         const progressCallback = (progress: ProgressStatus) => {
             if (scope.downloadCallback && scope.downloadCallback.downloadProgress) {
-                scope.downloadCallback.downloadProgress(progress);
+                const progressEvent = {
+                    loaded: progress.bytes,
+                    total: progress.contentLength,
+                    lengthComputable: progress.lengthComputable
+                };
+                scope.downloadCallback.downloadProgress(progressEvent);
             }
         };
         
@@ -66,30 +71,16 @@ class OSFileTransferWrapper {
     }
     
     /**
-     * Helper method to handle basic file info when detailed stats aren't available
+     * Creates a file result object and notifies the download callback with the result.
      */
     private handleBasicFileInfo(scope: any, filePath?: string, fileName?: string): void {
-        this.completeDownload(scope, {
+        const fileResult = {
             path: filePath,
             name: fileName || filePath?.split('/').pop() || '',
             isFile: true,
             isDirectory: false,
             fullPath: filePath,
             nativeURL: filePath ? `file://${filePath}` : undefined
-        });
-    }
-    
-    /**
-     * Helper method to complete the download operation and notify the callback
-     */
-    private completeDownload(scope: any, result: any): void {
-        const fileResult = {
-            path: result.path,
-            isFile: result.isFile || true,
-            isDirectory: false,
-            name: result.name || result.path?.split('/').pop() || '',
-            fullPath: result.path,
-            nativeURL: result.path ? `file://${result.path}` : undefined,
         };
         
         if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
@@ -132,7 +123,12 @@ class OSFileTransferWrapper {
         
         const progressCallback = (progress: ProgressStatus) => {
             if (scope.uploadCallback && scope.uploadCallback.uploadProgress) {
-                scope.uploadCallback.uploadProgress(progress);
+                const progressEvent = {
+                    loaded: progress.bytes,
+                    total: progress.contentLength,
+                    lengthComputable: progress.lengthComputable
+                };
+                scope.uploadCallback.uploadProgress(progressEvent);
             }
         };
         
