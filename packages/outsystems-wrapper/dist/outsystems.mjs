@@ -180,7 +180,12 @@ class OSFileTransferWrapper {
     };
     const progressCallback = (progress) => {
       if (scope.downloadCallback && scope.downloadCallback.downloadProgress) {
-        scope.downloadCallback.downloadProgress(progress);
+        const progressEvent = {
+          loaded: progress.bytes,
+          total: progress.contentLength,
+          lengthComputable: progress.lengthComputable
+        };
+        scope.downloadCallback.downloadProgress(progressEvent);
       }
     };
     if (this.isSynapseDefined()) {
@@ -192,29 +197,16 @@ class OSFileTransferWrapper {
     }
   }
   /**
-   * Helper method to handle basic file info when detailed stats aren't available
+   * Creates a file result object and notifies the download callback with the result.
    */
   handleBasicFileInfo(scope, filePath, fileName) {
-    this.completeDownload(scope, {
+    const fileResult = {
       path: filePath,
       name: fileName || filePath?.split("/").pop() || "",
       isFile: true,
       isDirectory: false,
       fullPath: filePath,
       nativeURL: filePath ? `file://${filePath}` : void 0
-    });
-  }
-  /**
-   * Helper method to complete the download operation and notify the callback
-   */
-  completeDownload(scope, result) {
-    const fileResult = {
-      path: result.path,
-      isFile: result.isFile || true,
-      isDirectory: false,
-      name: result.name || result.path?.split("/").pop() || "",
-      fullPath: result.path,
-      nativeURL: result.path ? `file://${result.path}` : void 0
     };
     if (scope.downloadCallback && scope.downloadCallback.downloadComplete) {
       scope.downloadCallback.downloadComplete(fileResult);
@@ -247,7 +239,12 @@ class OSFileTransferWrapper {
     };
     const progressCallback = (progress) => {
       if (scope.uploadCallback && scope.uploadCallback.uploadProgress) {
-        scope.uploadCallback.uploadProgress(progress);
+        const progressEvent = {
+          loaded: progress.bytes,
+          total: progress.contentLength,
+          lengthComputable: progress.lengthComputable
+        };
+        scope.uploadCallback.uploadProgress(progressEvent);
       }
     };
     if (this.isSynapseDefined()) {

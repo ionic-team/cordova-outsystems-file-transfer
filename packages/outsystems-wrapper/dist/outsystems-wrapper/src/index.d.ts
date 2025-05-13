@@ -2,13 +2,9 @@ declare class OSFileTransferWrapper {
     private listenersCount;
     downloadFile(options: any, scope: any): void;
     /**
-     * Helper method to handle basic file info when detailed stats aren't available
+     * Creates a file result object and notifies the download callback with the result.
      */
     private handleBasicFileInfo;
-    /**
-     * Helper method to complete the download operation and notify the callback
-     */
-    private completeDownload;
     uploadFile(options: any, scope: any): void;
     private handleTransferFinished;
     private isPWA;
