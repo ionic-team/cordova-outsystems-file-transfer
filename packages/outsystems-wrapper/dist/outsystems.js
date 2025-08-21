@@ -158,46 +158,51 @@
         downloadWithHeaders(options.url, options.headers, fileName);
         return;
       }
-      if (!scope) {
-        return;
-      }
-      this.listenersCount++;
-      const downloadSuccess = (res) => {
-        if (this.isFilePluginAvailable() && res.path) {
-          const statSuccess = (fileInfo) => {
-            this.handleBasicFileInfo(scope, res.path, fileInfo.name);
-          };
-          OSFilePluginWrapper.Instance.stat(
-            statSuccess,
-            () => this.handleBasicFileInfo(scope, res.path),
-            { path: res.path }
-          );
-        } else {
-          this.handleBasicFileInfo(scope, res.path);
+      if (scope) {
+        this.listenersCount++;
+        const downloadSuccess = (res) => {
+          if (this.isFilePluginAvailable() && res.path) {
+            const statSuccess = (fileInfo) => {
+              this.handleBasicFileInfo(scope, res.path, fileInfo.name);
+            };
+            OSFilePluginWrapper.Instance.stat(
+              statSuccess,
+              () => this.handleBasicFileInfo(scope, res.path),
+              { path: res.path }
+            );
+          } else {
+            this.handleBasicFileInfo(scope, res.path);
+          }
+        };
+        const downloadError = (err) => {
+          if (scope.downloadCallback && scope.downloadCallback.downloadError) {
+            scope.downloadCallback.downloadError(this.convertError(err));
+          }
+          this.handleTransferFinished();
+        };
+        const progressCallback = (progress) => {
+          if (scope.downloadCallback && scope.downloadCallback.downloadProgress) {
+            const progressEvent = {
+              loaded: progress.bytes,
+              total: progress.contentLength,
+              lengthComputable: progress.lengthComputable
+            };
+            scope.downloadCallback.downloadProgress(progressEvent);
+          }
+        };
+        if (this.isSynapseDefined()) {
+          CapacitorUtils.Synapse.FileTransfer.addListener("progress", progressCallback);
+          CapacitorUtils.Synapse.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
+        } else if (this.isCapacitorPluginDefined()) {
+          Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
+          Capacitor.Plugins.FileTransfer.downloadFile(options).then(downloadSuccess).catch(downloadError);
         }
-      };
-      const downloadError = (err) => {
-        if (scope.downloadCallback && scope.downloadCallback.downloadError) {
-          scope.downloadCallback.downloadError(this.convertError(err));
+      } else {
+        if (this.isSynapseDefined()) {
+          CapacitorUtils.Synapse.FileTransfer.downloadFile(options);
+        } else if (this.isCapacitorPluginDefined()) {
+          Capacitor.Plugins.FileTransfer.downloadFile(options);
         }
-        this.handleTransferFinished();
-      };
-      const progressCallback = (progress) => {
-        if (scope.downloadCallback && scope.downloadCallback.downloadProgress) {
-          const progressEvent = {
-            loaded: progress.bytes,
-            total: progress.contentLength,
-            lengthComputable: progress.lengthComputable
-          };
-          scope.downloadCallback.downloadProgress(progressEvent);
-        }
-      };
-      if (this.isSynapseDefined()) {
-        CapacitorUtils.Synapse.FileTransfer.addListener("progress", progressCallback);
-        CapacitorUtils.Synapse.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
-      } else if (this.isCapacitorPluginDefined()) {
-        Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
-        Capacitor.Plugins.FileTransfer.downloadFile(options).then(downloadSuccess).catch(downloadError);
       }
     }
     /**
@@ -225,38 +230,43 @@
         });
         return;
       }
-      if (!scope) {
-        return;
-      }
-      this.listenersCount++;
-      const uploadSuccess = (res) => {
-        if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
-          scope.uploadCallback.uploadComplete(res);
+      if (scope) {
+        this.listenersCount++;
+        const uploadSuccess = (res) => {
+          if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
+            scope.uploadCallback.uploadComplete(res);
+          }
+          this.handleTransferFinished();
+        };
+        const uploadError = (err) => {
+          if (scope.uploadCallback && scope.uploadCallback.uploadError) {
+            scope.uploadCallback.uploadError(this.convertError(err));
+          }
+          this.handleTransferFinished();
+        };
+        const progressCallback = (progress) => {
+          if (scope.uploadCallback && scope.uploadCallback.uploadProgress) {
+            const progressEvent = {
+              loaded: progress.bytes,
+              total: progress.contentLength,
+              lengthComputable: progress.lengthComputable
+            };
+            scope.uploadCallback.uploadProgress(progressEvent);
+          }
+        };
+        if (this.isSynapseDefined()) {
+          CapacitorUtils.Synapse.FileTransfer.addListener("progress", progressCallback);
+          CapacitorUtils.Synapse.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
+        } else if (this.isCapacitorPluginDefined()) {
+          Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
+          Capacitor.Plugins.FileTransfer.uploadFile(options).then(uploadSuccess).catch(uploadError);
         }
-        this.handleTransferFinished();
-      };
-      const uploadError = (err) => {
-        if (scope.uploadCallback && scope.uploadCallback.uploadError) {
-          scope.uploadCallback.uploadError(this.convertError(err));
+      } else {
+        if (this.isSynapseDefined()) {
+          CapacitorUtils.Synapse.FileTransfer.uploadFile(options);
+        } else if (this.isCapacitorPluginDefined()) {
+          Capacitor.Plugins.FileTransfer.uploadFile(options);
         }
-        this.handleTransferFinished();
-      };
-      const progressCallback = (progress) => {
-        if (scope.uploadCallback && scope.uploadCallback.uploadProgress) {
-          const progressEvent = {
-            loaded: progress.bytes,
-            total: progress.contentLength,
-            lengthComputable: progress.lengthComputable
-          };
-          scope.uploadCallback.uploadProgress(progressEvent);
-        }
-      };
-      if (this.isSynapseDefined()) {
-        CapacitorUtils.Synapse.FileTransfer.addListener("progress", progressCallback);
-        CapacitorUtils.Synapse.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
-      } else if (this.isCapacitorPluginDefined()) {
-        Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
-        Capacitor.Plugins.FileTransfer.uploadFile(options).then(uploadSuccess).catch(uploadError);
       }
     }
     handleTransferFinished() {
