@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 
 - **iOS** correct `responseCode` in upload response object to be string instead of Int.
+- **android** fix upload from content:// URIs
+- **android** correct upload response by removing gzip encoding
 
 ## [1.0.1]
 
