@@ -239,7 +239,7 @@ class OSFileTransferPlugin : CDVPlugin {
                     case .upload:
                         return [
                             "bytesSent": data.totalBytes,
-                            "responseCode": data.responseCode,
+                            "responseCode": "\(data.responseCode\)",
                             "response": data.responseBody ?? "",
                             "headers": data.headers
                         ]
