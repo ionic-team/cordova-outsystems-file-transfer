@@ -194,14 +194,14 @@
           cordova.plugins.FileTransfer.addListener("progress", progressCallback);
           cordova.plugins.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
         } else if (this.isCapacitorPluginDefined()) {
-          Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
-          Capacitor.Plugins.FileTransfer.downloadFile(options).then(downloadSuccess).catch(downloadError);
+          window.CapacitorPlugins.FileTransfer.addListener("progress", progressCallback);
+          window.CapacitorPlugins.FileTransfer.downloadFile(options).then(downloadSuccess).catch(downloadError);
         }
       } else {
         if (this.isCordovaPluginDefined()) {
           cordova.plugins.FileTransfer.downloadFile(options);
         } else if (this.isCapacitorPluginDefined()) {
-          Capacitor.Plugins.FileTransfer.downloadFile(options);
+          window.CapacitorPlugins.FileTransfer.downloadFile(options);
         }
       }
     }
@@ -258,14 +258,14 @@
           cordova.plugins.FileTransfer.addListener("progress", progressCallback);
           cordova.plugins.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
         } else if (this.isCapacitorPluginDefined()) {
-          Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
-          Capacitor.Plugins.FileTransfer.uploadFile(options).then(uploadSuccess).catch(uploadError);
+          window.CapacitorPlugins.FileTransfer.addListener("progress", progressCallback);
+          window.CapacitorPlugins.FileTransfer.uploadFile(options).then(uploadSuccess).catch(uploadError);
         }
       } else {
         if (this.isCordovaPluginDefined()) {
           cordova.plugins.FileTransfer.uploadFile(options);
         } else if (this.isCapacitorPluginDefined()) {
-          Capacitor.Plugins.FileTransfer.uploadFile(options);
+          window.CapacitorPlugins.FileTransfer.uploadFile(options);
         }
       }
     }
@@ -277,7 +277,7 @@
         if (this.isCordovaPluginDefined()) {
           cordova.plugins.FileTransfer.removeAllListeners();
         } else if (this.isCapacitorPluginDefined()) {
-          Capacitor.Plugins.FileTransfer.removeAllListeners();
+          window.CapacitorPlugins.FileTransfer.removeAllListeners();
         }
       }
     }
@@ -304,7 +304,7 @@
       return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined());
     }
     isCapacitorPluginDefined() {
-      return typeof Capacitor !== "undefined" && typeof Capacitor.Plugins !== "undefined" && typeof Capacitor.Plugins.FileTransfer !== "undefined";
+      return typeof window !== "undefined" && typeof window.CapacitorPlugins !== "undefined" && typeof window.CapacitorPlugins.FileTransfer !== "undefined";
     }
     isCordovaPluginDefined() {
       return typeof cordova !== "undefined" && typeof cordova.plugins !== "undefined" && typeof cordova.plugins.FileTransfer !== "undefined";

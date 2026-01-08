@@ -58,9 +58,9 @@ class OSFileTransferWrapper {
             cordova.plugins.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
-            Capacitor.Plugins.FileTransfer.addListener('progress', progressCallback);
+            window.CapacitorPlugins.FileTransfer.addListener('progress', progressCallback);
             // @ts-ignore
-            Capacitor.Plugins.FileTransfer.downloadFile(options)
+            window.CapacitorPlugins.FileTransfer.downloadFile(options)
               .then(downloadSuccess)
               .catch(downloadError);
           }
@@ -70,7 +70,7 @@ class OSFileTransferWrapper {
             cordova.plugins.FileTransfer.downloadFile(options);
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
-            Capacitor.Plugins.FileTransfer.downloadFile(options);
+            window.CapacitorPlugins.FileTransfer.downloadFile(options);
           }
         }
     }
@@ -141,9 +141,9 @@ class OSFileTransferWrapper {
             cordova.plugins.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
-            Capacitor.Plugins.FileTransfer.addListener('progress', progressCallback);
+            window.CapacitorPlugins.FileTransfer.addListener('progress', progressCallback);
             // @ts-ignore
-            Capacitor.Plugins.FileTransfer.uploadFile(options)
+            window.CapacitorPlugins.FileTransfer.uploadFile(options)
               .then(uploadSuccess)
               .catch(uploadError);
           }
@@ -153,7 +153,7 @@ class OSFileTransferWrapper {
             cordova.plugins.FileTransfer.uploadFile(options);
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
-            Capacitor.Plugins.FileTransfer.uploadFile(options);
+            window.CapacitorPlugins.FileTransfer.uploadFile(options);
           }
         }
     }
@@ -170,7 +170,7 @@ class OSFileTransferWrapper {
                 cordova.plugins.FileTransfer.removeAllListeners();
             } else if (this.isCapacitorPluginDefined()) {
                 // @ts-ignore
-                Capacitor.Plugins.FileTransfer.removeAllListeners();
+                window.CapacitorPlugins.FileTransfer.removeAllListeners();
             }
         }
     }
@@ -203,7 +203,7 @@ class OSFileTransferWrapper {
     
     private isCapacitorPluginDefined(): boolean {
         // @ts-ignore
-        return (typeof(Capacitor) !== "undefined" && typeof(Capacitor.Plugins) !== "undefined" && typeof(Capacitor.Plugins.FileTransfer) !== "undefined");
+        return (typeof(window) !== "undefined" && typeof(window.CapacitorPlugins) !== "undefined" && typeof(window.CapacitorPlugins.FileTransfer) !== "undefined");
     }
 
     private isCordovaPluginDefined(): boolean {
