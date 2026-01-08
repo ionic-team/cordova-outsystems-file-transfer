@@ -16,12 +16,7 @@ declare class OSFileTransferWrapper {
     private convertError;
     private isPWA;
     private isCapacitorPluginDefined;
-    /**
-     * Check that is required because MABS 12 isnt installing synapse dependency for capacitor plugins.
-     * Once MABS 12 no longer has that limitation, this can be removed.
-     * @returns true if synapse is defined, false otherwise
-     */
-    private isSynapseDefined;
+    private isCordovaPluginDefined;
     /**
      * Checks if the OSFilePluginWrapper is available
      * @returns true if the File Plugin is defined, false otherwise

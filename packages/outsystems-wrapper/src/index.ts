@@ -51,13 +51,13 @@ class OSFileTransferWrapper {
             }
           };
 
-          if (this.isSynapseDefined()) {
-            // @ts-ignore - For MABS with Synapse
-            CapacitorUtils.Synapse.FileTransfer.addListener('progress', progressCallback);
+          if (this.isCordovaPluginDefined()) {
             // @ts-ignore
-            CapacitorUtils.Synapse.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
+            cordova.plugins.FileTransfer.addListener('progress', progressCallback);
+            // @ts-ignore
+            cordova.plugins.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
           } else if (this.isCapacitorPluginDefined()) {
-            // @ts-ignore - For Capacitor without Synapse (e.g., MABS 12)
+            // @ts-ignore
             Capacitor.Plugins.FileTransfer.addListener('progress', progressCallback);
             // @ts-ignore
             Capacitor.Plugins.FileTransfer.downloadFile(options)
@@ -65,9 +65,9 @@ class OSFileTransferWrapper {
               .catch(downloadError);
           }
         } else {
-          if (this.isSynapseDefined()) {
+          if (this.isCordovaPluginDefined()) {
             // @ts-ignore
-            CapacitorUtils.Synapse.FileTransfer.downloadFile(options);
+            cordova.plugins.FileTransfer.downloadFile(options);
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
             Capacitor.Plugins.FileTransfer.downloadFile(options);
@@ -134,13 +134,13 @@ class OSFileTransferWrapper {
             }
           };
 
-          if (this.isSynapseDefined()) {
-            // @ts-ignore - For MABS with Synapse
-            CapacitorUtils.Synapse.FileTransfer.addListener('progress', progressCallback);
+          if (this.isCordovaPluginDefined()) {
             // @ts-ignore
-            CapacitorUtils.Synapse.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
+            cordova.plugins.FileTransfer.addListener('progress', progressCallback);
+            // @ts-ignore
+            cordova.plugins.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
           } else if (this.isCapacitorPluginDefined()) {
-            // @ts-ignore - For Capacitor without Synapse (e.g., MABS 12)
+            // @ts-ignore
             Capacitor.Plugins.FileTransfer.addListener('progress', progressCallback);
             // @ts-ignore
             Capacitor.Plugins.FileTransfer.uploadFile(options)
@@ -148,9 +148,9 @@ class OSFileTransferWrapper {
               .catch(uploadError);
           }
         } else {
-          if (this.isSynapseDefined()) {
+          if (this.isCordovaPluginDefined()) {
             // @ts-ignore
-            CapacitorUtils.Synapse.FileTransfer.uploadFile(options);
+            cordova.plugins.FileTransfer.uploadFile(options);
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
             Capacitor.Plugins.FileTransfer.uploadFile(options);
@@ -165,9 +165,9 @@ class OSFileTransferWrapper {
             this.listenersCount = 0;
         }
         else if (this.listenersCount === 0) {
-            if (this.isSynapseDefined()) {
+            if (this.isCordovaPluginDefined()) {
                 // @ts-ignore
-                CapacitorUtils.Synapse.FileTransfer.removeAllListeners();
+                cordova.plugins.FileTransfer.removeAllListeners();
             } else if (this.isCapacitorPluginDefined()) {
                 // @ts-ignore
                 Capacitor.Plugins.FileTransfer.removeAllListeners();
@@ -198,16 +198,7 @@ class OSFileTransferWrapper {
     }
     
     private isPWA(): boolean {
-        if (this.isSynapseDefined()) {
-            // Synapse defined <-> native mobile app <-> should use cordova web implementation
-            return false;
-        }
-        if (this.isCapacitorPluginDefined()) {
-            // Capacitor plugin defined, so it means we have:
-            // - a native mobile app where capacitor plugin comes without Synapse (MABS 12 issue) -> use capacitor plugin
-            return false;
-        }
-        return true;
+        return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined());
     }
     
     private isCapacitorPluginDefined(): boolean {
@@ -215,14 +206,9 @@ class OSFileTransferWrapper {
         return (typeof(Capacitor) !== "undefined" && typeof(Capacitor.Plugins) !== "undefined" && typeof(Capacitor.Plugins.FileTransfer) !== "undefined");
     }
 
-    /**
-     * Check that is required because MABS 12 isnt installing synapse dependency for capacitor plugins.
-     * Once MABS 12 no longer has that limitation, this can be removed.
-     * @returns true if synapse is defined, false otherwise
-     */
-    private isSynapseDefined(): boolean {
+    private isCordovaPluginDefined(): boolean {
         // @ts-ignore
-        return typeof(CapacitorUtils) !== "undefined" && typeof(CapacitorUtils.Synapse) !== "undefined" && typeof(CapacitorUtils.Synapse.FileTransfer) !== "undefined";
+        return typeof(cordova) !== "undefined" && typeof(cordova.plugins) !== "undefined" && typeof(cordova.plugins.FileTransfer) !== "undefined";
     }
 
     /**

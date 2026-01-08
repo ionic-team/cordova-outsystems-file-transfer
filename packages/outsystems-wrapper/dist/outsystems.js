@@ -190,16 +190,16 @@
             scope.downloadCallback.downloadProgress(progressEvent);
           }
         };
-        if (this.isSynapseDefined()) {
-          CapacitorUtils.Synapse.FileTransfer.addListener("progress", progressCallback);
-          CapacitorUtils.Synapse.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
+        if (this.isCordovaPluginDefined()) {
+          cordova.plugins.FileTransfer.addListener("progress", progressCallback);
+          cordova.plugins.FileTransfer.downloadFile(options, downloadSuccess, downloadError);
         } else if (this.isCapacitorPluginDefined()) {
           Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
           Capacitor.Plugins.FileTransfer.downloadFile(options).then(downloadSuccess).catch(downloadError);
         }
       } else {
-        if (this.isSynapseDefined()) {
-          CapacitorUtils.Synapse.FileTransfer.downloadFile(options);
+        if (this.isCordovaPluginDefined()) {
+          cordova.plugins.FileTransfer.downloadFile(options);
         } else if (this.isCapacitorPluginDefined()) {
           Capacitor.Plugins.FileTransfer.downloadFile(options);
         }
@@ -254,16 +254,16 @@
             scope.uploadCallback.uploadProgress(progressEvent);
           }
         };
-        if (this.isSynapseDefined()) {
-          CapacitorUtils.Synapse.FileTransfer.addListener("progress", progressCallback);
-          CapacitorUtils.Synapse.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
+        if (this.isCordovaPluginDefined()) {
+          cordova.plugins.FileTransfer.addListener("progress", progressCallback);
+          cordova.plugins.FileTransfer.uploadFile(options, uploadSuccess, uploadError);
         } else if (this.isCapacitorPluginDefined()) {
           Capacitor.Plugins.FileTransfer.addListener("progress", progressCallback);
           Capacitor.Plugins.FileTransfer.uploadFile(options).then(uploadSuccess).catch(uploadError);
         }
       } else {
-        if (this.isSynapseDefined()) {
-          CapacitorUtils.Synapse.FileTransfer.uploadFile(options);
+        if (this.isCordovaPluginDefined()) {
+          cordova.plugins.FileTransfer.uploadFile(options);
         } else if (this.isCapacitorPluginDefined()) {
           Capacitor.Plugins.FileTransfer.uploadFile(options);
         }
@@ -274,8 +274,8 @@
       if (this.listenersCount < 0) {
         this.listenersCount = 0;
       } else if (this.listenersCount === 0) {
-        if (this.isSynapseDefined()) {
-          CapacitorUtils.Synapse.FileTransfer.removeAllListeners();
+        if (this.isCordovaPluginDefined()) {
+          cordova.plugins.FileTransfer.removeAllListeners();
         } else if (this.isCapacitorPluginDefined()) {
           Capacitor.Plugins.FileTransfer.removeAllListeners();
         }
@@ -301,24 +301,13 @@
       }
     }
     isPWA() {
-      if (this.isSynapseDefined()) {
-        return false;
-      }
-      if (this.isCapacitorPluginDefined()) {
-        return false;
-      }
-      return true;
+      return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined());
     }
     isCapacitorPluginDefined() {
       return typeof Capacitor !== "undefined" && typeof Capacitor.Plugins !== "undefined" && typeof Capacitor.Plugins.FileTransfer !== "undefined";
     }
-    /**
-     * Check that is required because MABS 12 isnt installing synapse dependency for capacitor plugins.
-     * Once MABS 12 no longer has that limitation, this can be removed.
-     * @returns true if synapse is defined, false otherwise
-     */
-    isSynapseDefined() {
-      return typeof CapacitorUtils !== "undefined" && typeof CapacitorUtils.Synapse !== "undefined" && typeof CapacitorUtils.Synapse.FileTransfer !== "undefined";
+    isCordovaPluginDefined() {
+      return typeof cordova !== "undefined" && typeof cordova.plugins !== "undefined" && typeof cordova.plugins.FileTransfer !== "undefined";
     }
     /**
      * Checks if the OSFilePluginWrapper is available
