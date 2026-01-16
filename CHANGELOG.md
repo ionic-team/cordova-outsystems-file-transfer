@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **android** fix upload with params
 
+### 2026-01-13
+
+### Chores
+
+- **android**: Remove unused dependencies to `oscore` and `oscordova`.
+
 ## [1.0.2]
 
 ### 2025-12-30
