@@ -16,7 +16,7 @@ allprojects {
 }
 
 dependencies{
-    implementation "io.ionic.libs:ionfiletransfer-android:1.0.2@aar"
+    implementation "io.ionic.libs:ionfiletransfer-android:1.0.3@aar"
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
