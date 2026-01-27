@@ -111,6 +111,11 @@ class OSFileTransferWrapper {
           this.listenersCount++;
           const uploadSuccess = (res: UploadFileResult) => {
             if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
+              if (typeof(res.headers) !== "undefined") {
+                // OutSystems expects headers to be a Text
+                // @ts-ignore
+                res.headers = JSON.stringify(res.headers);
+              }
               scope.uploadCallback.uploadComplete(res);
             }
             this.handleTransferFinished();
