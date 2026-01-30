@@ -111,6 +111,11 @@ class OSFileTransferWrapper {
           this.listenersCount++;
           const uploadSuccess = (res: UploadFileResult) => {
             if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
+              if (typeof(res.headers) !== "undefined") {
+                // OutSystems expects headers to be a Text
+                // @ts-ignore
+                res.headers = JSON.stringify(res.headers);
+              }
               scope.uploadCallback.uploadComplete(res);
             }
             this.handleTransferFinished();
@@ -184,16 +189,26 @@ class OSFileTransferWrapper {
     private convertError(error: any): FileTransferError & { http_status?: number } {
         if (error.data) {
             // for Capacitor - when there is extra data, it is returned in a separate data attribute
-            return {
+            let object = {
                 ...error.data,
                 http_status: error.data.httpStatus,
             };
+            if (typeof(error.data.headers) !== "undefined") {
+                // OutSystems expects headers to be a Text
+                object.headers = JSON.stringify(error.data.headers);
+            }
+            return object;
         } else {
-            // for Cordova
-            return {
+            // for Cordova - all properties are in the root error object
+            let object = {
                 ...error,
                 http_status: error.httpStatus,
             };
+            if (typeof(error.headers) !== "undefined") {
+                // OutSystems expects headers to be a Text
+                object.headers = JSON.stringify(error.headers);
+            }
+            return object
         }
     }
     

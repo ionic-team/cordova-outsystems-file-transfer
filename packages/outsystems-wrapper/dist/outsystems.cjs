@@ -232,6 +232,9 @@ class OSFileTransferWrapper {
       this.listenersCount++;
       const uploadSuccess = (res) => {
         if (scope.uploadCallback && scope.uploadCallback.uploadComplete) {
+          if (typeof res.headers !== "undefined") {
+            res.headers = JSON.stringify(res.headers);
+          }
           scope.uploadCallback.uploadComplete(res);
         }
         this.handleTransferFinished();
@@ -287,15 +290,23 @@ class OSFileTransferWrapper {
    */
   convertError(error) {
     if (error.data) {
-      return {
+      let object = {
         ...error.data,
         http_status: error.data.httpStatus
       };
+      if (typeof error.data.headers !== "undefined") {
+        object.headers = JSON.stringify(error.data.headers);
+      }
+      return object;
     } else {
-      return {
+      let object = {
         ...error,
         http_status: error.httpStatus
       };
+      if (typeof error.headers !== "undefined") {
+        object.headers = JSON.stringify(error.headers);
+      }
+      return object;
     }
   }
   isPWA() {
