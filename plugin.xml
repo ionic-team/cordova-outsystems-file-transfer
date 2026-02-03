@@ -45,7 +45,7 @@
                 <source url="https://cdn.cocoapods.org/"/>
             </config>
             <pods use-frameworks="true">
-                <pod name="IONFileTransferLib" spec="1.0.1" />
+                <pod name="IONFileTransferLib" spec="1.0.2" />
             </pods>
         </podspec>
     
