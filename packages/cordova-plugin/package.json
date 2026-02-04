@@ -1,7 +1,7 @@
 {
   "name": "com.outsystems.plugins.filetransfer",
   "displayName": "FileTransfer",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "File transfer plugin for Cordova",
   "scripts": {
     "lint": "npm run eslint && npm run prettier -- --check",
