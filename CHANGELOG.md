@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **ios** Return error response body on HTTP error in upload or download.
 - **ios** Only notify of progress when HTTP code is successful.
+- **ios** Return error on HTTP errors instead of success for download.
 
 ## [1.0.3]
 
