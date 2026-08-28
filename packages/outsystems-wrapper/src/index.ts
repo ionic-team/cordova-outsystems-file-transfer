@@ -63,6 +63,35 @@ class OSFileTransferWrapper {
             window.CapacitorPlugins.FileTransfer.downloadFile(options)
               .then(downloadSuccess)
               .catch(downloadError);
+          } else if (this.isOldCordovaPluginDefined()) {
+            // the old plugin (pre-rewrite cordova-plugin-file-transfer) has no shared
+            // progress listener - it's a stateful constructor with a per-instance
+            // onprogress callback. Its download success returns a FileEntry-like object
+            // instead of a path, but the destination path is already known (options.path),
+            // so there's no need to parse that object at all.
+            // @ts-ignore
+            const oldTransfer = new FileTransfer();
+            oldTransfer.onprogress = (event: any) => progressCallback({
+              type: 'download',
+              url: options.url,
+              bytes: event.loaded,
+              contentLength: event.total,
+              lengthComputable: event.lengthComputable
+            });
+            const oldDownloadError = (err: any) => {
+              if (scope.downloadCallback && scope.downloadCallback.downloadError) {
+                scope.downloadCallback.downloadError(err);
+              }
+              this.handleTransferFinished();
+            };
+            oldTransfer.download(
+              options.url,
+              options.path,
+              () => downloadSuccess({ path: options.path }),
+              oldDownloadError,
+              false,
+              { headers: options.headers }
+            );
           }
         } else {
           if (this.isCordovaPluginDefined()) {
@@ -71,6 +100,9 @@ class OSFileTransferWrapper {
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
             window.CapacitorPlugins.FileTransfer.downloadFile(options);
+          } else if (this.isOldCordovaPluginDefined()) {
+            // @ts-ignore
+            new FileTransfer().download(options.url, options.path, () => {}, () => {}, false, { headers: options.headers });
           }
         }
     }
@@ -151,6 +183,42 @@ class OSFileTransferWrapper {
             window.CapacitorPlugins.FileTransfer.uploadFile(options)
               .then(uploadSuccess)
               .catch(uploadError);
+          } else if (this.isOldCordovaPluginDefined()) {
+            // the old plugin's FileUploadResult already matches UploadFileResult's shape,
+            // except responseCode is a number there instead of the Text-friendly string
+            // OutSystems expects (and that the new plugin already returns)
+            const fileName = options.path.split('/').pop();
+            // @ts-ignore
+            const oldTransfer = new FileTransfer();
+            oldTransfer.onprogress = (event: any) => progressCallback({
+              type: 'upload',
+              url: options.url,
+              bytes: event.loaded,
+              contentLength: event.total,
+              lengthComputable: event.lengthComputable
+            });
+            const oldUploadError = (err: any) => {
+              if (scope.uploadCallback && scope.uploadCallback.uploadError) {
+                scope.uploadCallback.uploadError(err);
+              }
+              this.handleTransferFinished();
+            };
+            oldTransfer.upload(
+              options.path,
+              options.url,
+              (res: any) => uploadSuccess({ ...res, responseCode: String(res.responseCode) }),
+              oldUploadError,
+              {
+                fileKey: options.fileKey,
+                fileName,
+                mimeType: options.mimeType,
+                headers: options.headers,
+                httpMethod: options.method,
+                chunkedMode: options.chunkedMode,
+                params: options.params
+              },
+              false
+            );
           }
         } else {
           if (this.isCordovaPluginDefined()) {
@@ -159,6 +227,16 @@ class OSFileTransferWrapper {
           } else if (this.isCapacitorPluginDefined()) {
             // @ts-ignore
             window.CapacitorPlugins.FileTransfer.uploadFile(options);
+          } else if (this.isOldCordovaPluginDefined()) {
+            // @ts-ignore
+            new FileTransfer().upload(options.path, options.url, () => {}, () => {}, {
+              fileKey: options.fileKey,
+              mimeType: options.mimeType,
+              headers: options.headers,
+              httpMethod: options.method,
+              chunkedMode: options.chunkedMode,
+              params: options.params
+            }, false);
           }
         }
     }
@@ -213,9 +291,9 @@ class OSFileTransferWrapper {
     }
     
     private isPWA(): boolean {
-        return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined());
+        return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined() || this.isOldCordovaPluginDefined());
     }
-    
+
     private isCapacitorPluginDefined(): boolean {
         // @ts-ignore
         return (typeof(window) !== "undefined" && typeof(window.CapacitorPlugins) !== "undefined" && typeof(window.CapacitorPlugins.FileTransfer) !== "undefined");
@@ -224,6 +302,16 @@ class OSFileTransferWrapper {
     private isCordovaPluginDefined(): boolean {
         // @ts-ignore
         return typeof(cordova) !== "undefined" && typeof(cordova.plugins) !== "undefined" && typeof(cordova.plugins.FileTransfer) !== "undefined";
+    }
+
+    /**
+     * @returns true if the native side is still running the old cordova-plugin-file-transfer
+     * (global `FileTransfer` constructor), e.g. after an OTA update ships this newer
+     * web wrapper on top of an app built with the previous native plugin
+     */
+    private isOldCordovaPluginDefined(): boolean {
+        // @ts-ignore
+        return typeof(FileTransfer) !== "undefined";
     }
 
     /**

@@ -18,6 +18,12 @@ declare class OSFileTransferWrapper {
     private isCapacitorPluginDefined;
     private isCordovaPluginDefined;
     /**
+     * @returns true if the native side is still running the old cordova-plugin-file-transfer
+     * (global `FileTransfer` constructor), e.g. after an OTA update ships this newer
+     * web wrapper on top of an app built with the previous native plugin
+     */
+    private isOldCordovaPluginDefined;
+    /**
      * Checks if the OSFilePluginWrapper is available
      * @returns true if the File Plugin is defined, false otherwise
      */

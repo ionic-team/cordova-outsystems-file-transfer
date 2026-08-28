@@ -192,12 +192,38 @@ class OSFileTransferWrapper {
       } else if (this.isCapacitorPluginDefined()) {
         window.CapacitorPlugins.FileTransfer.addListener("progress", progressCallback);
         window.CapacitorPlugins.FileTransfer.downloadFile(options).then(downloadSuccess).catch(downloadError);
+      } else if (this.isOldCordovaPluginDefined()) {
+        const oldTransfer = new FileTransfer();
+        oldTransfer.onprogress = (event) => progressCallback({
+          url: options.url,
+          bytes: event.loaded,
+          contentLength: event.total,
+          lengthComputable: event.lengthComputable
+        });
+        const oldDownloadError = (err) => {
+          if (scope.downloadCallback && scope.downloadCallback.downloadError) {
+            scope.downloadCallback.downloadError(err);
+          }
+          this.handleTransferFinished();
+        };
+        oldTransfer.download(
+          options.url,
+          options.path,
+          () => downloadSuccess({ path: options.path }),
+          oldDownloadError,
+          false,
+          { headers: options.headers }
+        );
       }
     } else {
       if (this.isCordovaPluginDefined()) {
         cordova.plugins.FileTransfer.downloadFile(options);
       } else if (this.isCapacitorPluginDefined()) {
         window.CapacitorPlugins.FileTransfer.downloadFile(options);
+      } else if (this.isOldCordovaPluginDefined()) {
+        new FileTransfer().download(options.url, options.path, () => {
+        }, () => {
+        }, false, { headers: options.headers });
       }
     }
   }
@@ -259,12 +285,54 @@ class OSFileTransferWrapper {
       } else if (this.isCapacitorPluginDefined()) {
         window.CapacitorPlugins.FileTransfer.addListener("progress", progressCallback);
         window.CapacitorPlugins.FileTransfer.uploadFile(options).then(uploadSuccess).catch(uploadError);
+      } else if (this.isOldCordovaPluginDefined()) {
+        const fileName = options.path.split("/").pop();
+        const oldTransfer = new FileTransfer();
+        oldTransfer.onprogress = (event) => progressCallback({
+          url: options.url,
+          bytes: event.loaded,
+          contentLength: event.total,
+          lengthComputable: event.lengthComputable
+        });
+        const oldUploadError = (err) => {
+          if (scope.uploadCallback && scope.uploadCallback.uploadError) {
+            scope.uploadCallback.uploadError(err);
+          }
+          this.handleTransferFinished();
+        };
+        oldTransfer.upload(
+          options.path,
+          options.url,
+          (res) => uploadSuccess({ ...res, responseCode: String(res.responseCode) }),
+          oldUploadError,
+          {
+            fileKey: options.fileKey,
+            fileName,
+            mimeType: options.mimeType,
+            headers: options.headers,
+            httpMethod: options.method,
+            chunkedMode: options.chunkedMode,
+            params: options.params
+          },
+          false
+        );
       }
     } else {
       if (this.isCordovaPluginDefined()) {
         cordova.plugins.FileTransfer.uploadFile(options);
       } else if (this.isCapacitorPluginDefined()) {
         window.CapacitorPlugins.FileTransfer.uploadFile(options);
+      } else if (this.isOldCordovaPluginDefined()) {
+        new FileTransfer().upload(options.path, options.url, () => {
+        }, () => {
+        }, {
+          fileKey: options.fileKey,
+          mimeType: options.mimeType,
+          headers: options.headers,
+          httpMethod: options.method,
+          chunkedMode: options.chunkedMode,
+          params: options.params
+        }, false);
       }
     }
   }
@@ -308,13 +376,21 @@ class OSFileTransferWrapper {
     }
   }
   isPWA() {
-    return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined());
+    return !(this.isCapacitorPluginDefined() || this.isCordovaPluginDefined() || this.isOldCordovaPluginDefined());
   }
   isCapacitorPluginDefined() {
     return typeof window !== "undefined" && typeof window.CapacitorPlugins !== "undefined" && typeof window.CapacitorPlugins.FileTransfer !== "undefined";
   }
   isCordovaPluginDefined() {
     return typeof cordova !== "undefined" && typeof cordova.plugins !== "undefined" && typeof cordova.plugins.FileTransfer !== "undefined";
+  }
+  /**
+   * @returns true if the native side is still running the old cordova-plugin-file-transfer
+   * (global `FileTransfer` constructor), e.g. after an OTA update ships this newer
+   * web wrapper on top of an app built with the previous native plugin
+   */
+  isOldCordovaPluginDefined() {
+    return typeof FileTransfer !== "undefined";
   }
   /**
    * Checks if the OSFilePluginWrapper is available
