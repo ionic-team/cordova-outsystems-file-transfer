@@ -1,3 +1,10 @@
+## [1.0.7](https://github.com/ionic-team/cordova-outsystems-file-transfer/compare/1.0.6...1.0.7) (2026-08-28)
+
+
+### Bug Fixes
+
+* **outsystems-wrapper:** Allow legacy clobber in new methods ([#23](https://github.com/ionic-team/cordova-outsystems-file-transfer/issues/23)) ([9f37cea](https://github.com/ionic-team/cordova-outsystems-file-transfer/commit/9f37ceac29fe8e9431007644f1341258cdc2dd2b))
+
 ## [1.0.6](https://github.com/ionic-team/cordova-outsystems-file-transfer/compare/1.0.5...1.0.6) (2026-07-14)
 
 ## [1.0.5]
