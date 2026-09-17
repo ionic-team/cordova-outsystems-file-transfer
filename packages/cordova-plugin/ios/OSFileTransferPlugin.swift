@@ -291,7 +291,9 @@ class OSFileTransferPlugin : CDVPlugin {
         ]
         
         for listener in listeners {
-            let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: progressData)
+            let result: CDVPluginResult? = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: progressData)
+            guard let result = result else { continue }
+
             result.keepCallback = true
             commandDelegate.send(result, callbackId: listener.callbackId)
         }
