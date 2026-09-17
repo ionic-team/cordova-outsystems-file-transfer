@@ -1,3 +1,7 @@
+#if canImport(Cordova)
+import Cordova
+#endif
+
 import Foundation
 import Combine
 import IONFileTransferLib
