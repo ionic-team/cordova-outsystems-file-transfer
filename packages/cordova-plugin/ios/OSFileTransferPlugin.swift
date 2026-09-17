@@ -96,11 +96,11 @@ class OSFileTransferPlugin : CDVPlugin {
     
     @objc(removeAllListeners:)
     func removeAllListeners(command: CDVInvokedUrlCommand) {
-        let result = CDVPluginResult(status: CDVCommandStatus_OK)
+        let result = CDVPluginResult(status: .ok)
         commandDelegate.send(result, callbackId: command.callbackId)
         
         for listener in listeners {
-            let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "removeAllListeners was called")
+            let result = CDVPluginResult(status: .error, messageAs: "removeAllListeners was called")
             commandDelegate.send(result, callbackId: listener.callbackId)
         }
         
@@ -295,7 +295,7 @@ class OSFileTransferPlugin : CDVPlugin {
         ]
         
         for listener in listeners {
-            let result: CDVPluginResult? = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: progressData)
+            let result: CDVPluginResult? = CDVPluginResult(status: .ok, messageAs: progressData)
             guard let result = result else { continue }
 
             result.keepCallback = true
@@ -304,7 +304,7 @@ class OSFileTransferPlugin : CDVPlugin {
     }
     
     private func sendSuccess(_ command: CDVInvokedUrlCommand, _ result: [String: Any] = [:]) {
-        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: result)
+        let pluginResult = CDVPluginResult(status: .ok, messageAs: result)
         commandDelegate.send(pluginResult, callbackId: command.callbackId)
     }
     
@@ -313,7 +313,7 @@ class OSFileTransferPlugin : CDVPlugin {
         errorWithContext.source = source
         errorWithContext.target = target
         
-        let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: errorWithContext.toDictionary())
+        let pluginResult = CDVPluginResult(status: .error, messageAs: errorWithContext.toDictionary())
         commandDelegate.send(pluginResult, callbackId: command.callbackId)
     }
     
