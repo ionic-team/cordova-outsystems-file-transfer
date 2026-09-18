@@ -21,7 +21,7 @@
         <source-file src="packages/cordova-plugin/android/OSFileTransferModels.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/filetransfer"/>
         <framework src="packages/cordova-plugin/android/build.gradle" custom="true" type="gradleReference"/>
     </platform>
-    <platform name="ios">
+    <platform name="ios" package="swift">
         <config-file parent="/*" target="config.xml">
             <feature name="OSFileTransferPlugin">
                 <param name="ios-package" value="OSFileTransferPlugin"/>
@@ -35,7 +35,7 @@
                 <source url="https://cdn.cocoapods.org/"/>
             </config>
             <pods use-frameworks="true">
-                <pod name="IONFileTransferLib" spec="1.0.3"/>
+                <pod name="IONFileTransferLib" spec="2.0.0" nospm="true"/>
             </pods>
         </podspec>
     </platform>
