@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/ionic-team/cordova-outsystems-file-transfer/compare/1.0.7...1.0.8) (2026-09-18)
+
+
+### Bug Fixes
+
+* Cordova iOS 8 / MABS 13 compatibility and SPM support ([#24](https://github.com/ionic-team/cordova-outsystems-file-transfer/issues/24)) ([3cabdd0](https://github.com/ionic-team/cordova-outsystems-file-transfer/commit/3cabdd013f11f71caab1ff0bcc26a698d238cbb8))
+
 ## [1.0.7](https://github.com/ionic-team/cordova-outsystems-file-transfer/compare/1.0.6...1.0.7) (2026-08-28)
 
 
