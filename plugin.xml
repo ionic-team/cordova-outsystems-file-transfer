@@ -20,6 +20,7 @@
         <source-file src="packages/cordova-plugin/android/OSFileTransferPlugin.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/filetransfer"/>
         <source-file src="packages/cordova-plugin/android/OSFileTransferModels.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/filetransfer"/>
         <framework src="packages/cordova-plugin/android/build.gradle" custom="true" type="gradleReference"/>
+        <resource-file src="local-maven-ionfiletransfer-android" target="local-maven-ionfiletransfer-android"/>
     </platform>
     <platform name="ios" package="swift">
         <config-file parent="/*" target="config.xml">
